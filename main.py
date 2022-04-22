@@ -12,8 +12,9 @@ def get_column_keys():
         data = json.load(file)
     return data
 
-def map_shipping_method(meth, country):
+def map_shipping_method(method, country):
     # TODO: Pull Shipping methods from settings
+    # TODO: Make Default methods in settinds once pulling from there.
     allowed = {
         "Domestic Standard": "Domestic Standard",
         "Vinyl Only Shipping": "Domestic Standard",
@@ -24,8 +25,8 @@ def map_shipping_method(meth, country):
         "Domestic Standard Upper Shelf": "Domestic Oversize"
     }
     
-    if meth in allowed:
-        return allowed[meth]
+    if method in allowed:
+        return allowed[method]
     else:
         if country.upper() == 'US':
             return 'Domestic Standard'
