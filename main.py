@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 # TODO: Make this dyanic. Argparse or file select.
-SHOPIFY_ORDERS = './order_export.csv'
+SHOPIFY_ORDERS = 'aug3_sdccvinyl.csv'
 
 def get_orders():
     return pd.read_csv(SHOPIFY_ORDERS, dtype=str)
@@ -13,7 +13,7 @@ def get_column_keys():
     return data
 
 def map_shipping_method(method, country):
-    # TODO: Pull Shipping methods from settings
+    # TODO: Pull Shipping methods from settin
     # TODO: Make Default methods in settinds once pulling from there.
     allowed = {
         "Domestic Standard": "Domestic Standard",
@@ -22,7 +22,7 @@ def map_shipping_method(method, country):
         "Free UPS Ground": "Ground",
         "UPS 3-Day": "3 Day",
         "UPS Next Day Air": "Next Day",
-        "Domestic Standard Upper Shelf": "Domestic Oversize"
+        "Domestic Standard Upper Shelf": "Domestic Oversize",
     }
     
     if method in allowed:
@@ -53,6 +53,9 @@ def main():
     # Forward Fill for duplicates per order
     for col in new_frame.columns:
         new_frame[col] = new_frame.groupby('OrderId')[col].ffill()
+        
+    errors = new_frame[new_frame['ShippingMethod'].isna()].copy()
+    new_frame = new_frame[~new_frame['ShippingMethod'].isna()]
 
     # Shipping Method Cleanup
     new_frame['ShippingMethod'] = new_frame.apply(
@@ -63,7 +66,13 @@ def main():
 
     # Remove pound from order name given in Shopify
     new_frame['OrderId'] = new_frame['OrderId'].str.replace('#', '')
-    new_frame.to_csv('upload.csv', index=False)
+    if not errors.empty:
+        print(f'{len(errors)} Orders found with errors.')
+        errors.to_csv('output/cannot_upload.csv', index=False)
+        
+    _fn = '_upload.'.join(SHOPIFY_ORDERS.split('.')) 
+    new_frame.to_csv('output/' + _fn, index=False)
+    
     return new_frame
     
 if __name__ == '__main__':
