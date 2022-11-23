@@ -14,10 +14,11 @@ pip install -r requirements.txt
 ## Usage:
 Currently the script looks for the default Shopify export format `orders_export.csv`. Soon this will likely be any file with "orders" or "export" or "shopify" in the name with some sort of hierarchy, but not sure where it will land. If you're reading this, then that means it's still on the original file lookup.
 ### Steps:
-1. Clone or download script. 
-2. Put exported shopify file in this directory.
-3. Run Script.
-4. Take upload file that was created and [import](https://my.amplifier.com/orders/import).
+1. Clone or download script.
+2. Make an `output` directory.
+3. Put exported shopify file in project root directory.
+4. Run Script.
+5. Take upload file that was created and [import](https://my.amplifier.com/orders/import).
 ## Running the script:
 point terminal into this directly and run the following command:
 ```
