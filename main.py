@@ -1,55 +1,21 @@
 import pandas as pd
-import json
+from helpers import get_orders, get_column_keys, map_shipping_method
 
 # TODO: Make this dyanic. Argparse or file select.
-SHOPIFY_ORDERS = 'various_records_misallocation.csv'
+SHOPIFY_ORDERS = 'dcon_unfulfilled.csv'
 
-def get_orders():
-    return pd.read_csv(SHOPIFY_ORDERS, dtype=str)
-
-def get_column_keys():
-    with open('columns.json', 'r') as file:
-        data = json.load(file)
-    return data
-
-def map_shipping_method(method, country):
-    # TODO: Pull Shipping methods from settin
-    # TODO: Make Default methods in settinds once pulling from there.
-    if country.upper() == 'US':
-        allowed = {
-            "Domestic Standard": "Domestic Standard",
-            "Vinyl Only Shipping": "Domestic Standard",
-            "DHL International Shipping": "International Standard",
-            "Free UPS Ground": "Ground",
-            "UPS 3-Day": "3 Day",
-            "UPS Next Day Air": "Next Day",
-            "Domestic Standard Upper Shelf": "Domestic Oversize",
-        }
-        
-        if method in allowed:
-            return allowed[method]
-        else:
-            return 'Domestic Standard'
-    else:
-        allowed = {
-            "Vinyl Only Shipping": "International Standard",
-            "DHL International Shipping": "International Standard",
-        }
-        if method in allowed:
-            return allowed[method]
-        else:
-            return 'International Standard'
-        
 def main():
     
     # Loads data
     new_frame = pd.DataFrame()
     convert_columns = get_column_keys()
-    shopify_orders = get_orders()
+    shopify_orders = get_orders(SHOPIFY_ORDERS)
+    
+    AMPLIFIER_COLUMNS = convert_columns['AtoS'].keys()
 
     # First fill in appropriate columns of template. Omits non required
     # TODO: Fix the way the settings outer key works | Kill it. 
-    for col in convert_columns['AtoS'].keys():
+    for col in AMPLIFIER_COLUMNS:
         shopify_equivalent = convert_columns['AtoS'].get(col, None)
         if shopify_equivalent:
             new_frame[col] = shopify_orders[shopify_equivalent]
@@ -66,13 +32,21 @@ def main():
     errors = new_frame[new_frame['ShippingMethod'].isna()].copy()
     new_frame = new_frame[~new_frame['ShippingMethod'].isna()]
 
-    # Shipping Method Cleanup
+    # Shipping Method
     new_frame['ShippingMethod'] = new_frame.apply(
         lambda o: map_shipping_method(
             o['ShippingMethod'], o['ShippingCountryCode']),
         axis=1
     )
 
+    # Empty billing
+    prefix = 'Billing'
+    billing_columns = [c for c in AMPLIFIER_COLUMNS if prefix in c]
+    for col in billing_columns:
+        field = col.split(prefix)[-1]
+        shipping_equivalent = f'Shipping{field}'
+        new_frame[col] = new_frame[shipping_equivalent]
+    
     # Remove pound from order name given in Shopify
     new_frame['OrderId'] = new_frame['OrderId'].str.replace('#', '')
     if not errors.empty:

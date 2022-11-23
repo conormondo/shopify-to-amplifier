@@ -11,3 +11,5 @@ env.bak/
 venv.bak/
 output/**
 *.csv
+
+shipping.json
